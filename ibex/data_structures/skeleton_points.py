@@ -75,12 +75,13 @@ class Skeleton:
 
     def get_nodes(self, get_ends=False):
         """Returns N x 3 bdarray of node co-ordinates, where N is # nodes"""
+        n_joints = len(self.joints)
         n_nodes = len(self.joints)+len(self.endpoints)
         nodes = np.zeros((n_nodes,3), dtype=np.int)
         for i, joint in enumerate(self.joints):
             nodes[i,:] = [joint.iz, joint.iy, joint.ix]
         for i, endpoint in enumerate(self.endpoints):
-            nodes[-1-i,:] = [endpoint.iz, endpoint.iy, endpoint.ix]
+            nodes[n_joints+i,:] = [endpoint.iz, endpoint.iy, endpoint.ix]
 	if not get_ends:
 	    return nodes
 	else:
