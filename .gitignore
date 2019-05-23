@@ -51,3 +51,7 @@ graphs/biological/node_generation.cpp
 *log
 *synctex.gz
 *pdf
+
+
+__archive/
+__archive-notebooks/
