@@ -213,7 +213,7 @@ static int MapDown2Up(const char *prefix, long skeleton_resolution[3], bool benc
     // get the downsample filename
     char downsample_filename[4096];
     if (benchmark) sprintf(downsample_filename, "benchmarks/skeleton/%s-downsample-%03ldx%03ldx%03ld.bytes", prefix, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
-    else sprintf(downsample_filename, "skeletons/%s/downsample-%03ldx%03ldx%03ld.bytes", prefix, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
+    else sprintf(downsample_filename, "%s/downsample-%03ldx%03ldx%03ld.bytes", prefix, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
 
     FILE *dfp = fopen(downsample_filename, "rb"); 
     if (!dfp) { fprintf(stderr, "Failed to read %s\n", downsample_filename); return 0; }
@@ -221,7 +221,7 @@ static int MapDown2Up(const char *prefix, long skeleton_resolution[3], bool benc
     // get the upsample filename
     char upsample_filename[4096];
     if (benchmark) sprintf(upsample_filename, "benchmarks/skeleton/%s-upsample-%03ldx%03ldx%03ld.bytes", prefix, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
-    else sprintf(upsample_filename, "skeletons/%s/upsample-%03ldx%03ldx%03ld.bytes", prefix, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
+    else sprintf(upsample_filename, "%s/upsample-%03ldx%03ldx%03ld.bytes", prefix, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
 
     FILE *ufp = fopen(upsample_filename, "rb");
     if (!ufp) { fprintf(stderr, "Failed to read %s\n", upsample_filename); return 0; }
@@ -368,11 +368,11 @@ void CppFindEndpointVectors(const char *prefix, long skeleton_resolution[3], flo
     // I/O filenames
     char input_filename[4096];
     if (benchmark) sprintf(input_filename, "benchmarks/skeleton/%s-%s-%03ldx%03ldx%03ld-downsample-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
-    else sprintf(input_filename, "skeletons/%s/%s-%03ldx%03ldx%03ld-downsample-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
+    else sprintf(input_filename, "%s/%s-%03ldx%03ldx%03ld-downsample-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
 
     char output_filename[4096];
     if (benchmark) sprintf(output_filename, "benchmarks/skeleton/%s-%s-%03ldx%03ldx%03ld-endpoint-vectors.vec", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
-    else sprintf(output_filename, "skeletons/%s/%s-%03ldx%03ldx%03ld-endpoint-vectors.vec", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
+    else sprintf(output_filename, "%s/%s-%03ldx%03ldx%03ld-endpoint-vectors.vec", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
 
     // open files for read/write
     FILE *rfp = fopen(input_filename, "rb");
@@ -624,11 +624,11 @@ void CppApplyUpsampleOperation(const char *prefix, const char *params, long *inp
     char input_filename[4096];
     if (strlen(params)) {
         if (benchmark) sprintf(input_filename, "benchmarks/skeleton/%s-%s-%03ldx%03ldx%03ld-downsample-%s-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z], params);
-        else sprintf(input_filename, "skeletons/%s/%s-%03ldx%03ldx%03ld-downsample-%s-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z], params);
+        else sprintf(input_filename, "%s/%s-%03ldx%03ldx%03ld-downsample-%s-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z], params);
     }
     else {
         if (benchmark) sprintf(input_filename, "benchmarks/skeleton/%s-%s-%03ldx%03ldx%03ld-downsample-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
-        else sprintf(input_filename, "skeletons/%s/%s-%03ldx%03ldx%03ld-downsample-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
+        else sprintf(input_filename, "%s/%s-%03ldx%03ldx%03ld-downsample-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
     }
 
     char output_params[4096];
@@ -637,7 +637,7 @@ void CppApplyUpsampleOperation(const char *prefix, const char *params, long *inp
 
     char output_filename[4096];
     if (benchmark) sprintf(output_filename, "benchmarks/skeleton/%s-%s-%03ldx%03ldx%03ld-upsample-%s-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z], output_params);
-    else sprintf(output_filename, "skeletons/%s/%s-%03ldx%03ldx%03ld-upsample-%s-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z], output_params);
+    else sprintf(output_filename, "%s/%s-%03ldx%03ldx%03ld-upsample-%s-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z], output_params);
 
     // open files for read/write
     FILE *rfp = fopen(input_filename, "rb");

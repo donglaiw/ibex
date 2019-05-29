@@ -24,7 +24,7 @@ class MetaData:
         self.crop_zmax = None
 
         # open the meta data txt file
-        filename = 'meta/{}.meta'.format(prefix)
+        filename = '{}/meta.txt'.format(prefix)
         with open(filename, 'r') as fd:
             lines = fd.readlines()
 

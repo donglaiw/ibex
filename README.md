@@ -5,6 +5,14 @@ Helper functions for [Ibex Package](https://github.com/bmatejek/ibex) for the ma
 
 Install
 ===
+- setup environment
+```
+conda create -n ibexHelper python=2.7
+source activate ibexHelper
+conda install cython numpy scipy networkx
+```
+
+- compilation
 ```
 cd ibex/skeletionization/
 python setup.py build_ext --inplace

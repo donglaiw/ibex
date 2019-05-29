@@ -102,9 +102,9 @@ def ReadImageData(prefix):
 
 def ReadSkeletons(prefix, skeleton_algorithm='thinning', read_edges=False, downsample_resolution=(80, 80, 80), params='00'):
     # read in all of the skeleton points
-    skeleton_filename = 'skeletons/{}/{}-{:03d}x{:03d}x{:03d}-upsample-{}-skeleton.pts'.format(prefix, skeleton_algorithm, downsample_resolution[IB_X], downsample_resolution[IB_Y], downsample_resolution[IB_Z], params)
-    endpoint_filename = 'skeletons/{}/{}-{:03d}x{:03d}x{:03d}-endpoint-vectors.vec'.format(prefix, skeleton_algorithm, downsample_resolution[IB_X], downsample_resolution[IB_Y], downsample_resolution[IB_Z])
-    edges_filename = 'skeletons/{}/{}-{:03d}x{:03d}x{:03d}-upsample-skeleton.edges'.format(prefix, skeleton_algorithm, downsample_resolution[IB_X], downsample_resolution[IB_Y], downsample_resolution[IB_Z])
+    skeleton_filename = '{}/{}-{:03d}x{:03d}x{:03d}-upsample-{}-skeleton.pts'.format(prefix, skeleton_algorithm, downsample_resolution[IB_X], downsample_resolution[IB_Y], downsample_resolution[IB_Z], params)
+    endpoint_filename = '{}/{}-{:03d}x{:03d}x{:03d}-endpoint-vectors.vec'.format(prefix, skeleton_algorithm, downsample_resolution[IB_X], downsample_resolution[IB_Y], downsample_resolution[IB_Z])
+    edges_filename = '{}/{}-{:03d}x{:03d}x{:03d}-upsample-skeleton.edges'.format(prefix, skeleton_algorithm, downsample_resolution[IB_X], downsample_resolution[IB_Y], downsample_resolution[IB_Z])
 
     # read the joints file and the vector file
     with open(skeleton_filename, 'rb') as sfd,\

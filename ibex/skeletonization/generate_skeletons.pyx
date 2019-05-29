@@ -31,7 +31,7 @@ def TopologicalThinning(prefix, input_segmentation, skeleton_resolution=(80, 80,
     assert (input_segmentation.dtype == np.int64)
 
     if benchmark and not os.path.isdir('benchmarks/skeleton'): os.mkdir('benchmarks/skeleton')
-    elif not benchmark and not os.path.isdir('skeletons/{}'.format(prefix)): os.mkdir('skeletons/{}'.format(prefix))
+    elif not benchmark and not os.path.isdir('{}'.format(prefix)): os.mkdir('{}'.format(prefix))
 
     start_time = time.time()
     
