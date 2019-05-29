@@ -5,6 +5,40 @@ from networkx.drawing.nx_agraph import graphviz_layout
 
 # post-process graph
 #####################
+def GetNodeList(nodes):
+    numN = len(nodes)
+    node_list = [None] * numN
+    for node_id in range(numN):
+        node_list[node_id] = [node_id, {'position' : nodes[node_id]}]
+    return node_list
+
+def GetEdgeList(graph, wt_dict=None, th_dict=None, ph_dict=None):
+    edge_list = []
+    for key in graph:
+        for val in graph[key]:
+            if val > key:
+                if wt_dict is None:
+                    edge_list += [[key, val]]
+                elif ph_dict is None:
+                    edge_list += [[key, val, {'weight' : wt_dict[(key, val)], \
+                                            'thick' : th_dict[(key, val)]}]]
+                else:
+                    edge_list += [[key, val, {'weight' : wt_dict[(key, val)], \
+                                            'thick' : th_dict[(key, val)], \
+                                            'path' : ph_dict[(key, val)]}]]
+    return edge_list
+
+def GetEdgeAttr(G):
+    numE = G.size()
+    wts= [None]*numE
+    tks= [None]*numE
+    phs= [None]*numE
+    for i,d in enumerate(G.edges.values()):
+        wts[i] = d['weight']
+        tks[i] = d['thick']
+        phs[i] = d['path']
+    return np.array(wts), np.array(tks), np.array(phs)
+
 def ShrinkGraph(G, threshold=[0,0], debug=False, prune_jns=True, percentile=None, path_dict=None):
     # abhi's version
     """ 
@@ -114,7 +148,9 @@ def ShrinkGraph(G, threshold=[0,0], debug=False, prune_jns=True, percentile=None
     # print('Total edges deleted {}'.format(delete_count))
     return G,path_dict
 
-def ShrinkGraph_v2(G, threshold=[0,0], debug=False, percentile=None, path_dict=None):
+
+
+def ShrinkGraph_v2(G, threshold=[0,0], debug=False, percentile=None):
     # donglai's improved version
     # weight and thickness
     if percentile is not None:
@@ -127,10 +163,9 @@ def ShrinkGraph_v2(G, threshold=[0,0], debug=False, percentile=None, path_dict=N
     iter_count = 0
     while True:
         print('Iteration %d'%(iter_count))
-        wts = np.array([d['weight'] for d in G.edges.values()])
-        tks = np.array([d['thick'] for d in G.edges.values()])
+        wts,tks,phs = GetEdgeAttr(G)
 
-        # step 1: remove Junction-Endpt edge
+        # step 1: remove small Junction-Endpt edge
         mask = [(len(G[e[0][0]].keys()) == 1) or (len(G[e[0][1]].keys()) == 1) \
                 for e in G.edges.items()]
         idx = np.unique(np.hstack([np.asarray((wts < th_w) & mask).nonzero()[0],\
@@ -144,15 +179,13 @@ def ShrinkGraph_v2(G, threshold=[0,0], debug=False, percentile=None, path_dict=N
         # TODO: based on angle, delete or contract
         for kk in kks:
             a1, a2 = kk 
-            path_dict.pop((a1,a2), None)
-            path_dict.pop((a2,a1), None)
             if len(G[a1].keys()) == 1:
                 G.remove_node(a1)
             if len(G[a2].keys()) == 1:
                 G.remove_node(a2)
             delete_count += 1
 
-        # step 2: remove degree=2 node
+        # step 2: remove degree=2 node (non-endpt, non-junction)
         # TODO: add thick thres
         nns = G.nodes.items()
         idx = np.where(np.array([len(G.edges(i[0])) for i in nns])==2)[0]
@@ -161,22 +194,13 @@ def ShrinkGraph_v2(G, threshold=[0,0], debug=False, percentile=None, path_dict=N
             m, n = G[nn].keys()
             wm, wn = G[nn][m]['weight'], G[nn][n]['weight']
             tmn = (wm*G[nn][m]['thick']+ wn*G[nn][n]['thick'])/(wn+wm)
+            pm, pn = G[nn][m]['path'], G[nn][n]['path']
             # add edge between m and n
-            G.add_edge(m, n, weight=(wm+wn), thick=tmn)
+            G.add_edge(m, n, weight=(wm+wn), thick=tmn, path=pm[::-1]+pn)
             G.remove_node(nn)
-            if path_dict is not None:
-                p0 = path_dict[(m,nn)]
-                p1 = path_dict[(n,nn)]
-                path_dict.pop((m,nn), None)
-                path_dict.pop((nn,m), None)
-                path_dict.pop((n,nn), None)
-                path_dict.pop((nn,n), None)
-                path_dict[(m,n)] = p0+p1 
-                path_dict[(n,m)] = p0+p1 
-
             delete_count += 1
         iter_count += 1
-    return G,path_dict
+    return G
 
 def PrintSummary(G):
     print('Summary')

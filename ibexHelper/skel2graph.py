@@ -32,10 +32,10 @@ def GetGraphFromSkeleton(skel, dt=None, dt_bb=[0,0,0], modified_bfs=True):
     if src is None:
         src = len(node_coords) - 1
     if modified_bfs:
-        wt_dict, th_dict, path_dict = ModifiedBFS([src], orig_graph, new_graph, visited, node_coords, dt=dt)
+        wt_dict, th_dict, ph_dict = ModifiedBFS([src], orig_graph, new_graph, visited, node_coords, dt=dt)
     else:
-        wt_dict, th_dict, path_dict = BFS([src], orig_graph, new_graph, visited, node_coords, dt=dt)
-    return new_graph, wt_dict, th_dict, path_dict
+        wt_dict, th_dict, ph_dict = BFS([src], orig_graph, new_graph, visited, node_coords, dt=dt)
+    return new_graph, wt_dict, th_dict, ph_dict
 
 
 def AddToDict(d, p1, p2):
@@ -70,17 +70,6 @@ def GetAdjDict(adj_mat):
             AddToDict(adj_dict, p2, p1)
     return adj_dict
 
-def GetEdgeList(graph, wt_dict=None, th_dict=None):
-    edgelist = []
-    for key in graph:
-        for val in graph[key]:
-            if val > key:
-                if wt_dict is None:
-                    edgelist += [[key, val]]
-                else:
-                    edgelist += [[key, val, {'weight' : wt_dict[(key, val)], \
-                                            'thick' : th_dict[(key, val)]}]]
-    return edgelist
 
 # can have cycle
 def ModifiedBFS(node_list, orig_graph, new_graph, visited, node_coords, dt=None, \

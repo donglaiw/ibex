@@ -1,7 +1,8 @@
 import numpy as np
 import pickle
+import h5py
 
-def get_bb(seg, do_count=False):
+def GetBbox(seg, do_count=False):
     dim = len(seg.shape)
     a=np.where(seg>0)
     if len(a)==0:
@@ -13,7 +14,7 @@ def get_bb(seg, do_count=False):
         out+=[len(a[0])]
     return out
 
-def writepkl(filename, content):
+def WritePkl(filename, content):
     with open(filename, "wb") as f:
         if isinstance(content, (list,)):
             for val in content:
@@ -21,7 +22,7 @@ def writepkl(filename, content):
         else:
             pickle.dump(content, f)
 
-def readpkl(filename):
+def ReadPkl(filename):
     data = []
     with open(filename, "rb") as f:
         while True:
@@ -30,5 +31,27 @@ def readpkl(filename):
             except:
                 break
     return data
+
+def WriteH5(filename, dtarray, datasetname='main'):
+    fid=h5py.File(filename,'w')                                                                      
+    if isinstance(datasetname, (list,)):                                                             
+        for i,dd in enumerate(datasetname):                                                          
+            ds = fid.create_dataset(dd, dtarray[i].shape, compression="gzip", dtype=dtarray[i].dtype)
+            ds[:] = dtarray[i]                                                                       
+    else:                                                                                            
+        ds = fid.create_dataset(datasetname, dtarray.shape, compression="gzip", dtype=dtarray.dtype) 
+        ds[:] = dtarray                                                                              
+    fid.close()    
+
+def ReadH5(filename, datasetname='main'):
+    fid=h5py.File(filename,'r')
+    if isinstance(datasetname, (list,)):
+        out = [None] *len(datasetname)
+        for i,dd in enumerate(datasetname):
+            out[i] = np.array(fid[dd])
+    else:                                                                                            
+        sz = len(fid[datasetname].shape)
+        out = np.array(fid[datasetname])
+    return out
 
 

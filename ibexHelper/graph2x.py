@@ -1,45 +1,20 @@
-def graph2h5():
-    skel = ReadSkeletons(seg_name, skeleton_algorithm='thinning', downsample_resolution=res, read_edges=True)[1]
-    nodes = np.stack(skel.get_nodes()).astype(int)
-    if opt =='0.3':
-	# graph, weight, thick
-	edgTh = [0,0]
-	graph = readpkl(Ds+'graph-%s.p'%(bfs))[0]
-	nn = graph.keys()
-	def isJunc(x):
-	    return len(graph[x])>1
-	nn = range(0,nodes.shape[0],4);wwp=0
-	def isJunc(x):
-	    return False
-    elif opt =='0.31':
-	G = nx.read_gpickle(Ds+'graph-%s-%d-%d.obj'%(bfs,edgTh[0],10*edgTh[1]))
-	import pdb; pdb.set_trace()
-	nn = list(G)
-	def isJunc(x):
-	    return G.degree(x)>1
-    elif opt =='0.32': # all pt
-	edgTh = [-1,0]
-	nn = range(len(nodes))
-	def isJunc(x):
-	    return False
+import numpy as np
 
-    mask = readh5('data_xt/mask_0.8.h5')
-    out = np.zeros(szx2,np.uint16)
+def Graph2H5(G, pos, ww=2):
+    nn = list(G)
+    def isJunc(x):
+        return G.degree(x)>1
+
+    out = np.zeros(G.graph['shape'],np.uint16)
     for k in nn:
-	pt = nodes[k]
-	if sn=='_db':
-	    val = k+1
-	elif sn=='':
-	    val = 1+2*isJunc(k)
-	    if pt[0]-wwb<0 or pt[0]+wwb>=szx2[0] or mask[max(0,pt[1]-wwb):pt[1]+wwb,\
-		    max(0,pt[2]-wwb):pt[2]+wwb].min() == 0:
-		val = 2
-	out[max(0,pt[0]-wwp):pt[0]+wwp+1,\
-	    max(0,pt[1]-wwp):pt[1]+wwp+1,\
-	    max(0,pt[2]-wwp):pt[2]+wwp+1] = val
+	pt = pos[k]
+        val = 1+isJunc(k)
+	out[max(0,pt[0]-ww):pt[0]+ww+1,\
+	    max(0,pt[1]-ww):pt[1]+ww+1,\
+	    max(0,pt[2]-ww):pt[2]+ww+1] = val
     return out
 
-def graph2seg():
+def Graph2Seg(G):
     print('load node position')
     skel = ReadSkeletons(seg_name, skeleton_algorithm='thinning', downsample_resolution=res, read_edges=True)[1]
     nodes = np.stack(skel.get_nodes()).astype(int)
