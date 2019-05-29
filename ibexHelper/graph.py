@@ -1,176 +1,189 @@
+import os,sys
+import numpy as np
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 
-import time
-import os
-import matplotlib.pyplot as plt
-
-from ibex.transforms.seg2seg import DownsampleMapping
-from ibex.skeletonization.generate_skeletons import TopologicalThinning, FindEndpointVectors, FindEdges
-from ibex.utilities.dataIO import ReadSkeletons
-from scipy.ndimage.morphology import distance_transform_edt
-
-import numpy as np
-import h5py
-import json
-
-import importlib
-skl = importlib.import_module('extract_skeleton')
-sh = importlib.import_module('skeleton_helper')
-
-CreateSkeleton = skl.CreateSkeleton
-
-def AddToDict(d, p1, p2):
-    if p1 not in d:
-        d[p1] = []
-    d[p1] += [p2]
-
-def AddEdge(graph, p1, p2):
-    AddToDict(graph, p1, p2)
-    AddToDict(graph, p2, p1)
-
-def AddEdgeAndWeight(graph, p1, p2, wt_dict, wt, th_dict, th=None):
-    AddEdge(graph, p1, p2)
-    wt_dict[(p1, p2)] = wt
-    wt_dict[(p2, p1)] = wt
-    if th is not None:
-        th_dict[(p1, p2)] = th
-        th_dict[(p2, p1)] = th
-
-def GetAdjDict(adj_mat):
+# post-process graph
+#####################
+def ShrinkGraph(G, threshold=[0,0], debug=False, prune_jns=True, percentile=None, path_dict=None):
+    # abhi's version
+    """ 
+        Do not contract an edge if edge part of a triangle loop 
+        with length shorter than the threshold.
     """
-    INPUT:  adj_mat is a compact adjacency matrix produced by Ibex,
-            of dimensions |E| x 2 where each tuple is the index
-            of source and target node.
-    OUTPUT: Dict where keys are node indices, and for each key,
-            the value is the list of adjacent nodes.
-    """
-    adj_dict = {}
-    for p1, p2 in adj_mat:
-        if p1 != p2: 
-            AddToDict(adj_dict, p1, p2)
-            AddToDict(adj_dict, p2, p1)
-    return adj_dict
+    # weight and thickness
+    if percentile is not None:
+        wts = np.array([d['weight'] for d in G.edges.values()])
+        tks = np.array([d['thick'] for d in G.edges.values()])
+        threshold[0] = GetThreshold(wts,percentile[0])
+        threshold[1] = GetThreshold(tks,percentile[1])
+    th_w,th_t = threshold
+    def GetOrphan(a1, a2, s1, s2, G):
+        orphan_, other_, orph_node_ = None, None, None
+        if len(s1) == 0 and len(s2) == 2: orphan_ = a2; other_ = a1;
+        if len(s2) == 0 and len(s1) == 2: orphan_ = a1; other_ = a2;
+        # if no edge exists between two adjacent nodes 
+        # of orphan, then orphan can be deleted.
+        if orphan_ is not None:
+            orph_node_ = a1
+            m, n = set(G[orphan_].keys()).difference({other_})
+            if n not in G[m].keys():
+                return orph_node_
+        return None
 
-def GetEdgeList(graph, wt_dict=None, th_dict=None):
-    edgelist = []
-    for key in graph:
-        for val in graph[key]:
-            if val > key:
-                if wt_dict is None:
-                    edgelist += [[key, val]]
-                else:
-                    edgelist += [[key, val, {'weight' : wt_dict[(key, val)], \
-                                            'thick' : th_dict[(key, val)]}]]
-    return edgelist
+    delete_count = 0
+    while True:
+        wts = np.array([d['weight'] for d in G.edges.values()])
+        tks = np.array([d['thick'] for d in G.edges.values()])
+        if prune_jns:
+            idx = np.hstack([np.where(wts < threshold[0])[0],\
+                             np.where(tks < threshold[1])[0]])
+        else:
+            mask = [(len(G[e[0][0]].keys()) == 1) or (len(G[e[0][1]].keys()) == 1) \
+                    for e in G.edges.items()]
+            idx = np.hstack([np.where(wts < threshold[0] & mask)[0],\
+                             np.where(tks < threshold[1] & mask)[0]])
+        if len(idx) == 0:
+            break
+        u,v = None, None
+        orphan_node = None
+        # find a candidate edge to delete in this loop
+        for i in idx:
+            a1, a2 = G.edges.items()[i][0] 
+            s1, s2 = set(G[a1].keys()).difference({a2}), \
+                        set(G[a2].keys()).difference({a1})
+            intersect_ = s1 & s2
+            # If no common node in adjacency list then break
+            if len(intersect_) == 0:
+                u, v = a1, a2
+                orphan_node = GetOrphan(a1, a2, s1, s2, G)
+                break
+            # Else, make sure no triangular loop of decent size breaks
+            else:
+                crucial_edge = False
+                for n in intersect_:
+                    w1 = G.get_edge_data(n, a1)['weight']
+                    w2 = G.get_edge_data(n, a2)['weight']
+                    # if a loop (containing this edge) with 
+                    # len > 3*thresh exists, don't delete this edge
+                    if w1 + w2 > 3*threshold[0] - wts[i]:
+                        crucial_edge = True
+                        break
+                if not crucial_edge:
+                    u, v = a1, a2
+                    orphan_node = GetOrphan(a1, a2, s1, s2, G)
+                    break
+        if u is None:
+            break
+        # update path_dict
+        if path_dict is not None:
+            p0 = path_dict[(u,v)]
+            path_dict.pop((u,v), None)
+            path_dict.pop((v,u), None)
+            # v be removed
+            for vv in G.edges(v):
+                v2 = vv[0] if vv[0]!=v else vv[1]
+                if v2!=u:
+                    p1 = path_dict[(v2,v)]
+                    path_dict.pop((v,v2), None)
+                    path_dict.pop((v2,v), None)
+                    path_dict[(u,v2)] = p0+p1 
+                    path_dict[(v2,u)] = p0+p1 
 
-def ModifiedBFS(node_list, orig_graph, new_graph, visited, node_coords, dt=None, \
-                use_euclid=True, debug=False):
-    def IsJoint(node, graph):
-        return (len(graph[node]) == 2)
-    
-    def IsEdge(n1, n2, graph):
-        if n1 in graph and n2 in graph[n1]:
-            return True
-        return False
-    
-    def Euclidean(n1, n2, coords):
-        return np.linalg.norm(coords[n1,:] - coords[n2,:])
-    
-    def AvgThick(n1, n2, coords, dt):
-        if dt is None: return 0.0
-        x1,y1,z1 = coords[n1,:]
-        x2,y2,z2 = coords[n2,:]
-        return 0.5*(dt[x1,y1,z1] + dt[x2,y2,z2])
-    
-    def GetNext(src, adj, orig_graph, coords, use_euclid=True, dt=None):
-        prev = src
-        cur = adj
-        path = [prev]
-        weight = 1.0
-        if use_euclid: 
-            weight = Euclidean(prev, cur, coords)
-        thickness = AvgThick(prev, cur, coords, dt)*weight
-        while IsJoint(cur, orig_graph):
-            nxt = orig_graph[cur][int(orig_graph[cur][0] == prev)]
-            prev = cur
-            cur = nxt
-            cur_wt = 1.0
-            if use_euclid:
-                cur_wt = Euclidean(prev, cur, coords)
-            weight += cur_wt
-            thickness += AvgThick(prev, cur, coords, dt)*cur_wt
-            path += [prev]
-        path += [cur]
-        try:
-            thickness = thickness/weight
-        except:
-            print('Total edge weight should not be zero.')
-        return cur, weight, thickness, path
-    
-    if debug:
-        for key in orig_graph:
-            print(key, orig_graph[key])
-    new_node = max(orig_graph) 
-    weight_dict = {}
-    thick_dict = {}
-    while len(node_list) > 0:
-        src = node_list.pop(0)
-        visited[src] = True
-        adj_nodes = orig_graph[src]
-        if debug: print('Source {:.0f}'.format(src))
-        self_loops_ = []
-        for adj in adj_nodes:
-            if debug: print('  Adj {:.0f}'.format(adj))
-            nxt, wt, th, path = GetNext(src, adj, orig_graph, node_coords, use_euclid=use_euclid, \
-                                       dt=dt)
-            if debug: print('    Nxt {:.0f}'.format(nxt))
-            if (not visited[nxt]) or (src == nxt):
-                # if there is no edge yet between src & nxt in new_graph, add one
-                if (not IsEdge(src, nxt, new_graph)) and (src != nxt):
-                    AddEdge(new_graph, src, nxt)
-                    if debug: print('      Add Edge {:.0f}-{:.0f}'.format(src, nxt))
-                    weight_dict[(src, nxt)] = wt
-                    weight_dict[(nxt, src)] = wt
-                    thick_dict[(src, nxt)] = th
-                    thick_dict[(nxt, src)] = th
-                # if there is an edge betwen src & nxt in new_graph, add another path
-                # of length two edges between src & nxt, with a new node in between. 
-                # (This step allows capturing multiple paths between src and nxt.)
-                # (The reason for adding a new node: Networkx won't allow multiple paths).
-                elif src != nxt:
-                    new_node += 1
-                    AddEdgeAndWeight(new_graph, src, new_node, weight_dict, wt/2.0, \
-                                    thick_dict, th)
-                    AddEdgeAndWeight(new_graph, new_node, nxt, weight_dict, wt/2.0, \
-                                    thick_dict, th)
-                    if debug: 
-                        print('      Add Edge {:.0f}-{:.0f}'.format(src, new_node))
-                        print('      Add Edge {:.0f}-{:.0f}'.format(new_node, nxt))
-                # If src is same as nxt then there is a self-loop in the skeleton topology.
-                # This code snippet captures that loop by creating a triangular loop with
-                # the src as one of the vertices and two new nodes.
-                elif (src == nxt):
-                    if (path not in self_loops_) and (list(reversed(path)) not in self_loops_):
-                        self_loops_ += [path]
-                        new_node += 1
-                        n1 = new_node
-                        new_node += 1
-                        n2 = new_node
-                        AddEdgeAndWeight(new_graph, src, n1, weight_dict, wt/3.0, \
-                                        thick_dict, th)
-                        AddEdgeAndWeight(new_graph, n1, n2, weight_dict, wt/3.0, \
-                                        thick_dict, th)
-                        AddEdgeAndWeight(new_graph, n2, nxt, weight_dict, wt/3.0, \
-                                        thick_dict, th)
-                        if debug: 
-                            print('      Add Edge {:.0f}-{:.0f}'.format(src, n1))
-                            print('      Add Edge {:.0f}-{:.0f}'.format(n1, n2))
-                            print('      Add Edge {:.0f}-{:.0f}'.format(n2, nxt))
-                    
-                if (nxt not in node_list) and (src != nxt):
-                    node_list += [nxt]
-    return weight_dict, thick_dict
+        G = nx.contracted_nodes(G, u, v, self_loops=False)
+        delete_count += 1
+        if orphan_node is not None:
+            m, n = G[orphan_node].keys()
+            wm, wn = G[orphan_node][m]['weight'], G[orphan_node][n]['weight']
+            # add edge between m and n
+            G.add_edge(m, n, weight=(wm+wn))
+            # delete orphan node
+            G.remove_node(orphan_node)
+            if path_dict is not None:
+                p0 = path_dict[(m,orphan_node)]
+                p1 = path_dict[(n,orphan_node)]
+                path_dict.pop((m,orphan_node), None)
+                path_dict.pop((orphan_node,m), None)
+                path_dict.pop((n,orphan_node), None)
+                path_dict.pop((orphan_node,n), None)
+                path_dict[(m,n)] = p0+p1 
+                path_dict[(n,m)] = p0+p1 
+        if debug: 
+            print('Deleted edge {}-{}'.format(u, v))
+            PrintSummary(G)
+    # print('Total edges deleted {}'.format(delete_count))
+    return G,path_dict
+
+def ShrinkGraph_v2(G, threshold=[0,0], debug=False, percentile=None, path_dict=None):
+    # donglai's improved version
+    # weight and thickness
+    if percentile is not None:
+        wts = np.array([d['weight'] for d in G.edges.values()])
+        tks = np.array([d['thick'] for d in G.edges.values()])
+        threshold[0] = GetThreshold(wts, percentile[0])
+        threshold[1] = GetThreshold(tks, percentile[1])
+    th_w,th_t = threshold
+    delete_count = 0
+    iter_count = 0
+    while True:
+        print('Iteration %d'%(iter_count))
+        wts = np.array([d['weight'] for d in G.edges.values()])
+        tks = np.array([d['thick'] for d in G.edges.values()])
+
+        # step 1: remove Junction-Endpt edge
+        mask = [(len(G[e[0][0]].keys()) == 1) or (len(G[e[0][1]].keys()) == 1) \
+                for e in G.edges.items()]
+        idx = np.unique(np.hstack([np.asarray((wts < th_w) & mask).nonzero()[0],\
+                         np.asarray((tks < th_t) & mask).nonzero()[0]]))
+        if len(idx) == 0:
+            print('nothing to shrink')
+            break
+
+        ees =  G.edges.items()
+        kks = [ees[i][0] for i in idx]
+        # TODO: based on angle, delete or contract
+        for kk in kks:
+            a1, a2 = kk 
+            path_dict.pop((a1,a2), None)
+            path_dict.pop((a2,a1), None)
+            if len(G[a1].keys()) == 1:
+                G.remove_node(a1)
+            if len(G[a2].keys()) == 1:
+                G.remove_node(a2)
+            delete_count += 1
+
+        # step 2: remove degree=2 node
+        # TODO: add thick thres
+        nns = G.nodes.items()
+        idx = np.where(np.array([len(G.edges(i[0])) for i in nns])==2)[0]
+        kks = [nns[i][0] for i in idx]
+        for nn in kks:
+            m, n = G[nn].keys()
+            wm, wn = G[nn][m]['weight'], G[nn][n]['weight']
+            tmn = (wm*G[nn][m]['thick']+ wn*G[nn][n]['thick'])/(wn+wm)
+            # add edge between m and n
+            G.add_edge(m, n, weight=(wm+wn), thick=tmn)
+            G.remove_node(nn)
+            if path_dict is not None:
+                p0 = path_dict[(m,nn)]
+                p1 = path_dict[(n,nn)]
+                path_dict.pop((m,nn), None)
+                path_dict.pop((nn,m), None)
+                path_dict.pop((n,nn), None)
+                path_dict.pop((nn,n), None)
+                path_dict[(m,n)] = p0+p1 
+                path_dict[(n,m)] = p0+p1 
+
+            delete_count += 1
+        iter_count += 1
+    return G,path_dict
+
+def PrintSummary(G):
+    print('Summary')
+    for e in zip(G.edges, G.edges.values()):
+        edge_ = 'Edge({}, {})'.format(e[0][0], e[0][1])
+        wt_ = 'Weight: {:.2f}'.format(e[1]['weight'])
+        print(edge_ + ' '*(20 - len(edge_)) + wt_)
 
 def MergeTwoEdges(G):
     while True:
@@ -208,40 +221,7 @@ def DeLeaf(G, thresh=None, avoid_n=-1):
 def GetWt(G):
     return np.sum([x['weight'] for x in G.edges.values()])
 
-def PlotLeavesHist(G, bins=None):
-    leaves = []
-    for n in G:
-        adj_ = G[n].keys()
-        if len(adj_) == 1:
-            leaves += [G[n][adj_[0]]['weight']]
-    if bins is None:
-        _ = plt.hist(leaves, edgecolor='black', linewidth=1.2)
-    else:
-        _ = plt.hist(leaves, bins=bins, edgecolor='black', linewidth=1.2)
-    _ = plt.title('Total Graph Wt. {:.0f}, Leaves Wt. {:.0f}'.format(GetWt(G), np.sum(leaves)), fontsize=12)
-    plt.show()
-    
-def PlotLeavesPercentile(G, seg_id, prefix='(No Prune) '):
-    leaves = []
-    for n in G:
-        adj_ = G[n].keys()
-        if len(adj_) == 1:
-            leaves += [G[n][adj_[0]]['weight']]
-    perc_wts = []
-    perc = np.linspace(1, 100, 49)
-    for q in perc:
-        perc_wts += [np.percentile(leaves, q)]
-    fig = plt.gcf()
-    _ = plt.plot(perc, perc_wts)
-    title_str = prefix + 'Seg {}'.format(seg_id)
-    _ = plt.title(prefix + 'Seg {}'.format(seg_id) + \
-                  'Total Graph Wt. {:.0f}, Leaves Wt. {:.0f}'.format(GetWt(G), np.sum(leaves)), fontsize=12)
-    fig.set_size_inches(9, 6)
-    fig.savefig('./leaves/' + title_str + '.png')
-    plt.show()
-    
-def GetThreshold(G, base_percentile=50):
-    wts = np.array([d['weight'] for d in G.edges.values()])
+def GetThreshold(wts, base_percentile=50):
     threshold = np.percentile(wts, base_percentile)
     perc_wts = wts/np.sum(wts)
     base_perc_wt = np.percentile(perc_wts, base_percentile)
@@ -302,99 +282,18 @@ def PrintLeafWts(G):
             leaves += [G[n][adj_[0]]['weight']]
     print(sorted(leaves))
 
-def BFS(node_list, orig_graph, new_graph, visited, node_coords, dt=None, \
-                use_euclid=True, debug=False):
-    def IsJoint(node, graph):
-        return (len(graph[node]) == 2)
-    
-    def IsEdge(n1, n2, graph):
-        if n1 in graph and n2 in graph[n1]:
-            return True
-        return False
-    
-    def Euclidean(n1, n2, coords):
-        return np.linalg.norm(coords[n1,:] - coords[n2,:])
-    
-    def AvgThick(n1, n2, coords, dt):
-        if dt is None: return 0.0
-        x1,y1,z1 = coords[n1,:]
-        x2,y2,z2 = coords[n2,:]
-        return 0.5*(dt[x1,y1,z1] + dt[x2,y2,z2])
-    
-    def GetNext(src, adj, orig_graph, coords, use_euclid=True, dt=None):
-        prev = src
-        cur = adj
-        path = [prev]
-        weight = 1.0
-        if use_euclid: 
-            weight = Euclidean(prev, cur, coords)
-        thickness = AvgThick(prev, cur, coords, dt)*weight
-        while IsJoint(cur, orig_graph):
-            nxt = orig_graph[cur][int(orig_graph[cur][0] == prev)]
-            prev = cur
-            cur = nxt
-            cur_wt = 1.0
-            if use_euclid:
-                cur_wt = Euclidean(prev, cur, coords)
-            weight += cur_wt
-            thickness += AvgThick(prev, cur, coords, dt)*cur_wt
-            path += [prev]
-        path += [cur]
-        try:
-            thickness = thickness/weight
-        except:
-            print('Total edge weight should not be zero.')
-        return cur, weight, thickness, path
-    
-    if debug:
-        for key in orig_graph:
-            print(key, orig_graph[key])
-    new_node = max(orig_graph) 
-    weight_dict = {}
-    thick_dict = {}
-    while len(node_list) > 0:
-        src = node_list.pop(0)
-        visited[src] = True
-        adj_nodes = orig_graph[src]
-        if debug: print('Source {:.0f}'.format(src))
-            
-        for adj in adj_nodes:
-            if debug: print('  Adj {:.0f}'.format(adj))
-            nxt, wt, th, path = GetNext(src, adj, orig_graph, node_coords, use_euclid=use_euclid, \
-                                       dt=dt)
-            if debug: print('    Nxt {:.0f}'.format(nxt))
-            if (not visited[nxt]):
-                    AddEdge(new_graph, src, nxt)
-                    if debug: print('      Add Edge {:.0f}-{:.0f}'.format(src, nxt))
-                    weight_dict[(src, nxt)] = wt
-                    weight_dict[(nxt, src)] = wt
-                    thick_dict[(src, nxt)] = th
-                    thick_dict[(nxt, src)] = th
-                    node_list += [nxt]
-                    visited[nxt] = True
-    return weight_dict, thick_dict
-
-def GetGraphFromSkeleton(skel, dt=None, modified_bfs=True):
-    adj_mat = sh.get_adj(skel)
-    orig_graph = GetAdjDict(adj_mat)
-    node_coords = sh.get_nodes(skel)
-    
-    new_graph = {}
-    visited = [False]*len(node_coords)
-    # find a source which has at least one incident edge
-    src = None
-    for i in range(len(node_coords)-1, -1, -1):
-        if i in orig_graph and (False or len(orig_graph[i]) > 2): 
-            src = i
-            break
-    if src is None:
-        src = len(node_coords) - 1
-    if modified_bfs:
-        wt_dict, th_dict = ModifiedBFS([src], orig_graph, new_graph, visited, node_coords, dt=dt)
+def PlotGraph(G,show_wt=True,show_th=True):
+    if not show_wt and not show_th:
+        nx.draw_networkx(G)
     else:
-        wt_dict, th_dict = BFS([src], orig_graph, new_graph, visited, node_coords, dt=dt)
-    return new_graph, wt_dict, th_dict
-
+        if show_th:
+            edge_dict = {e[0]: '({:.1f}, {:.1f})'.format(e[1]['weight'], \
+                                                         e[1]['thick']) for e in G.edges.items()}
+        else:
+            edge_dict = {e[0]: '{:.1f}'.format(e[1]['weight']) for e in G.edges.items()}
+        pos=graphviz_layout(G)
+        nx.draw_networkx(G, pos=pos, node_size=sz, ax=ax, with_labels=labels,
+                        font_size=5, font_color='white', font_weight='bold') #, edge_color='red')        
 def DrawGraph(ax, edgelist, sz=1, labels=False, weighted=False, threshold=1.0, show_th=False, \
              show_wts=False, save_graphx=False, gx_dir=None, seg_id=None, percentile=None, \
              percent=None, prune_jns=True, is_tree=False):

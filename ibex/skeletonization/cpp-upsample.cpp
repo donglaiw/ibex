@@ -465,12 +465,12 @@ void CppFindEdges(const char *prefix, long skeleton_resolution[3], float output_
 
     // I/O filenames
     char input_filename[4096];
-    if (benchmark) sprintf(input_filename, "benchmarks/skeleton/%s-%s-%03ldx%03ldx%03ld-downsample-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
-    else sprintf(input_filename, "skeletons/%s/%s-%03ldx%03ldx%03ld-downsample-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
+    if (benchmark) sprintf(input_filename, "benchmarks/%s-%s-%03ldx%03ldx%03ld-downsample-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
+    else sprintf(input_filename, "%s/%s-%03ldx%03ldx%03ld-downsample-skeleton.pts", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
 
     char output_filename[4096];
-    if (benchmark) sprintf(output_filename, "benchmarks/skeleton/%s-%s-%03ldx%03ldx%03ld-upsample-skeleton.edges", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
-    else sprintf(output_filename, "skeletons/%s/%s-%03ldx%03ldx%03ld-upsample-skeleton.edges", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
+    if (benchmark) sprintf(output_filename, "skeleton/%s-%s-%03ldx%03ldx%03ld-upsample-skeleton.edges", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
+    else sprintf(output_filename, "%s/%s-%03ldx%03ldx%03ld-upsample-skeleton.edges", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
 
     // open files for read/write
     FILE *rfp = fopen(input_filename, "rb");
@@ -582,7 +582,7 @@ void CppFindEdges(const char *prefix, long skeleton_resolution[3], float output_
 
     if (benchmark) {
         char running_times_filename[4096];
-        sprintf(running_times_filename, "benchmarks/skeleton/running-times/edge-times/%s-%s-%03ldx%03ldx%03ld.bytes", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
+        sprintf(running_times_filename, "benchmarks/%s-%s-%03ldx%03ldx%03ld-edge-times.bytes", prefix, skeleton_algorithm, skeleton_resolution[IB_X], skeleton_resolution[IB_Y], skeleton_resolution[IB_Z]);
 
         FILE *running_times_fp = fopen(running_times_filename, "wb");
         if (!running_times_fp) exit(-1);

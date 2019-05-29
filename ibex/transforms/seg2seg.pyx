@@ -96,8 +96,8 @@ def DownsampleMapping(prefix, segmentation, output_resolution=(80, 80, 80), benc
     # everything needs to be long ints to work with c++
     assert (segmentation.dtype == np.int64)
 
-    if benchmark and not os.path.isdir('benchmarks/skeleton'): os.mkdir('benchmarks/skeleton')
-    elif not benchmark and not os.path.isdir('skeletons/{}'.format(prefix)): os.mkdir('skeletons/{}'.format(prefix))
+    if benchmark and not os.path.isdir('benchmarks/'): os.mkdir('benchmarks/')
+    elif not benchmark and not os.path.isdir('{}'.format(prefix)): os.mkdir('{}'.format(prefix))
 
     # ignore time to read data
     start_time = time.time()
