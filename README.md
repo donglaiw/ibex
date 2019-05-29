@@ -26,5 +26,5 @@ Main Contributors
 - @bmatejek: mesh to skeleton conversion
 - @srujanm: skeleton to graph conversion
 - @abhimanyutalwar: graph simplification, notebook 
-- @donglaiw: graph simplification
+- @donglaiw: graph simplification, repo organization
 - @pragyasingh7:
