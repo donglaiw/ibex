@@ -27,4 +27,3 @@ Main Contributors
 - @srujanm: skeleton to graph conversion
 - @abhimanyutalwar: graph simplification, notebook 
 - @donglaiw: graph simplification, repo organization
-- @pragyasingh7:
