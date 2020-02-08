@@ -1,6 +1,5 @@
 import struct
 import numpy as np
-import itertools
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
@@ -36,15 +35,15 @@ class Skeleton:
         self.edges = []        
 
         for joint in joints:
-            iz = joint / (grid_size[IB_Y] * grid_size[IB_X])
-            iy = (joint - iz * grid_size[IB_Y] * grid_size[IB_X]) / grid_size[IB_X]
+            iz = joint // (grid_size[IB_Y] * grid_size[IB_X])
+            iy = (joint - iz * grid_size[IB_Y] * grid_size[IB_X]) // grid_size[IB_X]
             ix = joint % grid_size[IB_X]
 
             self.joints.append(Joint(joint, iz, iy, ix))
 
         for endpoint in endpoints:
-            iz = endpoint / (grid_size[IB_Y] * grid_size[IB_X])
-            iy = (endpoint - iz * grid_size[IB_Y] * grid_size[IB_X]) / grid_size[IB_X]
+            iz = endpoint // (grid_size[IB_Y] * grid_size[IB_X])
+            iy = (endpoint - iz * grid_size[IB_Y] * grid_size[IB_X]) // grid_size[IB_X]
             ix = endpoint % grid_size[IB_X]
 
             vector = vectors[endpoint]
@@ -52,12 +51,12 @@ class Skeleton:
             self.endpoints.append(Endpoint(endpoint, iz, iy, ix, vector))
 
         if edges is not None:
-            for source, target in itertools.izip(*edges):
-                iz_s = source / (grid_size[IB_Y] * grid_size[IB_X])
-                iy_s = (source - iz_s * grid_size[IB_Y] * grid_size[IB_X]) / grid_size[IB_X]
+            for source, target in list(zip(*edges)):
+                iz_s = source // (grid_size[IB_Y] * grid_size[IB_X])
+                iy_s = (source - iz_s * grid_size[IB_Y] * grid_size[IB_X]) // grid_size[IB_X]
                 ix_s = source % grid_size[IB_X]
-                iz_t = target / (grid_size[IB_Y] * grid_size[IB_X])
-                iy_t = (target - iz_t * grid_size[IB_Y] * grid_size[IB_X]) / grid_size[IB_X]
+                iz_t = target // (grid_size[IB_Y] * grid_size[IB_X])
+                iy_t = (target - iz_t * grid_size[IB_Y] * grid_size[IB_X]) // grid_size[IB_X]
                 ix_t = target % grid_size[IB_X]
                 # note - the Edge object does not distinguish Joints and Endpoints
                 # Endpoints are mapped to Joints with positive co-ordinates
@@ -82,12 +81,12 @@ class Skeleton:
             nodes[i,:] = [joint.iz, joint.iy, joint.ix]
         for i, endpoint in enumerate(self.endpoints):
             nodes[n_joints+i,:] = [endpoint.iz, endpoint.iy, endpoint.ix]
-	if not get_ends:
-	    return nodes
-	else:
-	    ends = np.ones(n_nodes)
-	    ends[0:len(self.joints)] = 0
-	    return nodes, ends
+        if not get_ends:
+            return nodes
+        else:
+            ends = np.ones(n_nodes)
+            ends[0:len(self.joints)] = 0
+            return nodes, ends
 
     def get_ends(self):
         """Returns M x 3 bdarray of node co-ordinates, where N is # endpoints"""
@@ -95,7 +94,7 @@ class Skeleton:
         ends = np.zeros((n_ends,3), dtype=np.int)
         for i, endpoint in enumerate(self.endpoints):
             ends[-1-i,:] = [endpoint.iz, endpoint.iy, endpoint.ix]
-	return ends
+        return ends
 
     def get_adj(self):
         """Returns non-zero elements of adjacency matrix with nodes ordered acc to the get_nodes function"""
@@ -115,8 +114,8 @@ class Skeleton:
             assert n_edges > 0
         except:
             return None
-	adj = self.get_adj()
-	mask = adj[:,0] != adj[:,1]
+        adj = self.get_adj()
+        mask = adj[:,0] != adj[:,1]
         uid, cc = np.unique(adj[mask,:], return_counts=True)
         return uid[np.where(cc>2)]
 

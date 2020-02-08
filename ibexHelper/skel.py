@@ -51,14 +51,15 @@ def CreateSkeleton(segment, out_folder = 'temp/', in_res=(30, 48, 48), out_res=(
     segment = binary_fill_holes(segment).astype('int64')
     
     print('seg: downsample')
+    out_folder = out_folder.encode('UTF-8')
     DownsampleMapping(out_folder, segment, output_resolution=out_res)
     print('skel: topological thining')
     TopologicalThinning(out_folder, segment, skeleton_resolution=out_res)
     print('graph: edge/end-pt')
-    FindEndpointVectors(out_folder, skeleton_algorithm='thinning', skeleton_resolution=out_res)
-    FindEdges(out_folder, skeleton_algorithm='thinning', skeleton_resolution=out_res)
+    FindEndpointVectors(out_folder, skeleton_algorithm='thinning'.encode('UTF-8'), skeleton_resolution=out_res)
+    FindEdges(out_folder, skeleton_algorithm='thinning'.encode('UTF-8'), skeleton_resolution=out_res)
  
-def CreateMetaFile(resolution, seg_shape,out_folder='./'):
+def CreateMetaFile(resolution, seg_shape, out_folder='./'):
     meta = open(os.path.join(out_folder, 'meta.txt'), "w")
     meta.write("# resolution in nm\n")
     meta.write("%dx%dx%d\n"%(resolution[2], resolution[1], resolution[0]))
@@ -69,7 +70,7 @@ def CreateMetaFile(resolution, seg_shape,out_folder='./'):
  
 def PlotSkeleton(seg_name, plot_type='node', out_res=(30,48,48)): 
     print('Read skeletons')
-    skeletons = ReadSkeletons(seg_name, skeleton_algorithm='thinning', downsample_resolution=out_res, read_edges=True)
+    skeletons = ReadSkeletons(seg_name, skeleton_algorithm='thinning'.encode('UTF-8'), downsample_resolution=out_res, read_edges=True)
 
     print('Plot skeletons')
     node_list = skeletons[1].get_nodes()

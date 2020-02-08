@@ -96,15 +96,12 @@ def DownsampleMapping(prefix, segmentation, output_resolution=(80, 80, 80), benc
     # everything needs to be long ints to work with c++
     assert (segmentation.dtype == np.int64)
 
-    if benchmark and not os.path.isdir('benchmarks/'): os.mkdir('benchmarks/')
-    elif not benchmark and not os.path.isdir('{}'.format(prefix)): os.mkdir('{}'.format(prefix))
-
     # ignore time to read data
     start_time = time.time()
 
     # convert numpy arrays to c++ format
     cdef np.ndarray[long, ndim=3, mode='c'] cpp_segmentation = np.ascontiguousarray(segmentation, dtype=ctypes.c_int64)
-    cdef np.ndarray[float, ndim=1, mode='c'] cpp_input_resolution = np.ascontiguousarray(dataIO.Resolution(prefix), dtype=ctypes.c_float)
+    cdef np.ndarray[float, ndim=1, mode='c'] cpp_input_resolution = np.ascontiguousarray(dataIO.Resolution(prefix.decode('UTF-8')), dtype=ctypes.c_float)
     cdef np.ndarray[long, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(output_resolution, dtype=ctypes.c_int64)
     cdef np.ndarray[long, ndim=1, mode='c'] cpp_input_grid_size = np.ascontiguousarray(segmentation.shape, dtype=ctypes.c_int64)
 

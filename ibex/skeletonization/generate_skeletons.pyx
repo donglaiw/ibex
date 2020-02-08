@@ -14,7 +14,7 @@ import skimage.morphology
 
 from ibex.utilities import dataIO
 from ibex.utilities.constants import *
-from medial_axis_util import PostProcess
+from ibex.skeletonization.medial_axis_util import PostProcess
 
 
 cdef extern from 'cpp-generate_skeletons.h':
@@ -30,9 +30,6 @@ def TopologicalThinning(prefix, input_segmentation, skeleton_resolution=(80, 80,
     # everything needs to be long ints to work with c++
     assert (input_segmentation.dtype == np.int64)
 
-    if benchmark and not os.path.isdir('benchmarks/skeleton'): os.mkdir('benchmarks/skeleton')
-    elif not benchmark and not os.path.isdir('{}'.format(prefix)): os.mkdir('{}'.format(prefix))
-
     start_time = time.time()
     
     # convert the numpy arrays to c++
@@ -40,14 +37,14 @@ def TopologicalThinning(prefix, input_segmentation, skeleton_resolution=(80, 80,
     lut_directory = os.path.dirname(__file__)
 
     # call the topological skeleton algorithm
-    CppTopologicalThinning(prefix, &(cpp_skeleton_resolution[0]), lut_directory, benchmark)
+    CppTopologicalThinning(prefix, &(cpp_skeleton_resolution[0]), lut_directory.encode('UTF-8'), benchmark)
     
     # call the upsampling operation
     cdef np.ndarray[long, ndim=3, mode='c'] cpp_input_segmentation = np.ascontiguousarray(input_segmentation, dtype=ctypes.c_int64)
-    cdef np.ndarray[float, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(dataIO.Resolution(prefix), dtype=ctypes.c_float)
-    params = ""
+    cdef np.ndarray[float, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(dataIO.Resolution(prefix.decode('UTF-8')), dtype=ctypes.c_float)
+    params = "".encode('UTF-8')
 
-    CppApplyUpsampleOperation(prefix, params, &(cpp_input_segmentation[0,0,0]), &(cpp_skeleton_resolution[0]), &(cpp_output_resolution[0]), 'thinning', astar_expansion, benchmark)
+    CppApplyUpsampleOperation(prefix, params, &(cpp_input_segmentation[0,0,0]), &(cpp_skeleton_resolution[0]), &(cpp_output_resolution[0]), 'thinning'.encode('UTF-8'), astar_expansion, benchmark)
         
     print 'Topological thinning time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)
 
@@ -114,7 +111,7 @@ def MedialAxis(prefix, input_segmentation, skeleton_resolution=(80, 80, 80), ben
     # call the upsampling operation
     cdef np.ndarray[long, ndim=1, mode='c'] cpp_skeleton_resolution = np.ascontiguousarray(skeleton_resolution, dtype=ctypes.c_int64)
     cdef np.ndarray[long, ndim=3, mode='c'] cpp_input_segmentation = np.ascontiguousarray(input_segmentation, dtype=ctypes.c_int64)
-    cdef np.ndarray[float, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(dataIO.Resolution(prefix), dtype=ctypes.c_float)
+    cdef np.ndarray[float, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(dataIO.Resolution(prefix.decode('UTF-8')), dtype=ctypes.c_float)
     params = ""
 
     CppApplyUpsampleOperation(prefix, params, &(cpp_input_segmentation[0,0,0]), &(cpp_skeleton_resolution[0]), &(cpp_output_resolution[0]), 'medial-axis', astar_expansion, benchmark)
@@ -141,7 +138,7 @@ def TEASER(prefix, input_segmentation, skeleton_resolution=(80, 80, 80), benchma
 
     # call the upsampling operation
     cdef np.ndarray[long, ndim=3, mode='c'] cpp_input_segmentation = np.ascontiguousarray(input_segmentation, dtype=ctypes.c_int64)
-    cdef np.ndarray[float, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(dataIO.Resolution(prefix), dtype=ctypes.c_float)
+    cdef np.ndarray[float, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(dataIO.Resolution(prefix.decode('UTF-8')), dtype=ctypes.c_float)
     #params = "{:02d}-{:02d}".format(long(10 * teaser_scale), teaser_buffer)
     params = ""
 
@@ -160,7 +157,7 @@ def FindEndpointVectors(prefix, skeleton_resolution=(80, 80, 80), skeleton_algor
 
     # convert to numpy array for c++ call
     cdef np.ndarray[long, ndim=1, mode='c'] cpp_skeleton_resolution = np.ascontiguousarray(skeleton_resolution, dtype=ctypes.c_int64)
-    cdef np.ndarray[float, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(dataIO.Resolution(prefix), dtype=ctypes.c_float)
+    cdef np.ndarray[float, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(dataIO.Resolution(prefix.decode('UTF-8')), dtype=ctypes.c_float)
 
     CppFindEndpointVectors(prefix, &(cpp_skeleton_resolution[0]), &(cpp_output_resolution[0]), skeleton_algorithm, benchmark)
 
@@ -173,7 +170,7 @@ def FindEdges(prefix, skeleton_resolution=(80, 80, 80), skeleton_algorithm='thin
 
     # convert to numpy array for c++ call
     cdef np.ndarray[long, ndim=1, mode='c'] cpp_skeleton_resolution = np.ascontiguousarray(skeleton_resolution, dtype=ctypes.c_int64)
-    cdef np.ndarray[float, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(dataIO.Resolution(prefix), dtype=ctypes.c_float)
+    cdef np.ndarray[float, ndim=1, mode='c'] cpp_output_resolution = np.ascontiguousarray(dataIO.Resolution(prefix.decode('UTF-8')), dtype=ctypes.c_float)
 
     CppFindEdges(prefix, &(cpp_skeleton_resolution[0]), &(cpp_output_resolution[0]), skeleton_algorithm, benchmark)
 
