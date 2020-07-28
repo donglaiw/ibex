@@ -41,7 +41,10 @@ transforms/distance.cpp
 transforms/seg2seg.cpp
 transforms/seg2gold.cpp
 graphs/biological/node_generation.cpp
-    
+ibex/skeletonization/generate_skeletons.cpp    
+ibex/transforms/distance.cpp
+ibex/transforms/seg2gold.cpp
+ibex/transforms/seg2seg.py
 .*
 
 *aux
