@@ -46,7 +46,7 @@ def TopologicalThinning(prefix, input_segmentation, skeleton_resolution=(80, 80,
 
     CppApplyUpsampleOperation(prefix, params, &(cpp_input_segmentation[0,0,0]), &(cpp_skeleton_resolution[0]), &(cpp_output_resolution[0]), 'thinning'.encode('UTF-8'), astar_expansion, benchmark)
         
-    print 'Topological thinning time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)
+    # print 'Topological thinning time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)
 
 
 
@@ -116,7 +116,7 @@ def MedialAxis(prefix, input_segmentation, skeleton_resolution=(80, 80, 80), ben
 
     CppApplyUpsampleOperation(prefix, params, &(cpp_input_segmentation[0,0,0]), &(cpp_skeleton_resolution[0]), &(cpp_output_resolution[0]), 'medial-axis', astar_expansion, benchmark)
 
-    print 'Medial axis thinning time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)
+    # print 'Medial axis thinning time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)
 
 
 
@@ -144,7 +144,7 @@ def TEASER(prefix, input_segmentation, skeleton_resolution=(80, 80, 80), benchma
 
     CppApplyUpsampleOperation(prefix, params, &(cpp_input_segmentation[0,0,0]), &(cpp_skeleton_resolution[0]), &(cpp_output_resolution[0]), 'teaser', astar_expansion, benchmark)
 
-    print 'TEASER skeletonization time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)
+    # print 'TEASER skeletonization time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)
 
 
 
@@ -161,7 +161,7 @@ def FindEndpointVectors(prefix, skeleton_resolution=(80, 80, 80), skeleton_algor
 
     CppFindEndpointVectors(prefix, &(cpp_skeleton_resolution[0]), &(cpp_output_resolution[0]), skeleton_algorithm, benchmark)
 
-    print 'Endpoint vector time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)
+    # print 'Endpoint vector time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)
 
 
 # find edges for skeleton (only works for A*=0), tested only for 'thinning' algorithm
@@ -174,4 +174,4 @@ def FindEdges(prefix, skeleton_resolution=(80, 80, 80), skeleton_algorithm='thin
 
     CppFindEdges(prefix, &(cpp_skeleton_resolution[0]), &(cpp_output_resolution[0]), skeleton_algorithm, benchmark)
 
-    print 'Edge finding time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)
+    # print 'Edge finding time for {}: {}'.format((skeleton_resolution[0], skeleton_resolution[1], skeleton_resolution[2]), time.time() - start_time)

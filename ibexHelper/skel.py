@@ -43,19 +43,20 @@ def CreateSkeleton(segment, out_folder = 'temp/', in_res=(30, 48, 48), out_res=(
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
-    print('meta file')
+    # print('meta file')
     CreateMetaFile(in_res, segment.shape, out_folder)
 
-    print('seg: pre-process')
-    segment[segment > 0] = 1
-    segment = binary_fill_holes(segment).astype('int64')
+    # print('seg: pre-process')
+    # segment[segment > 0] = 1
+    # segment = binary_fill_holes(segment).astype('int64')
+    segment = segment.astype('int64')
     
-    print('seg: downsample')
+    # print('seg: downsample')
     out_folder = out_folder.encode('UTF-8')
     DownsampleMapping(out_folder, segment, output_resolution=out_res)
-    print('skel: topological thining')
+    # print('skel: topological thining')
     TopologicalThinning(out_folder, segment, skeleton_resolution=out_res)
-    print('graph: edge/end-pt')
+    # print('graph: edge/end-pt')
     FindEndpointVectors(out_folder, skeleton_algorithm='thinning'.encode('UTF-8'), skeleton_resolution=out_res)
     FindEdges(out_folder, skeleton_algorithm='thinning'.encode('UTF-8'), skeleton_resolution=out_res)
  

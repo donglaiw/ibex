@@ -114,4 +114,4 @@ def DownsampleMapping(prefix, segmentation, output_resolution=(80, 80, 80), benc
     del cpp_output_resolution
     del cpp_input_grid_size
 
-    print 'Downsampling to resolution {} in {} seconds'.format(output_resolution, time.time() - start_time)
+    # print 'Downsampling to resolution {} in {} seconds'.format(output_resolution, time.time() - start_time)
