@@ -30,7 +30,7 @@ def GetGraphFromSkeleton(skel, dt=None, dt_bb=[0,0,0], modified_bfs=True):
             src = i
             break
     if src is None:
-        src = len(node_coords) - 1
+        src = next(iter(orig_graph.keys()))
     if modified_bfs:
         wt_dict, th_dict, ph_dict = ModifiedBFS([src], orig_graph, new_graph, visited, node_coords, dt=dt)
     else:
