@@ -1,0 +1,8 @@
+scikit-image
+basemap
+h5py
+scipy
+cython
+numpy
+networkx
+numba

@@ -1,0 +1,4 @@
+scipy
+cython
+numpy
+networkx

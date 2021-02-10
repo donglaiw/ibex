@@ -54,4 +54,29 @@ def ReadH5(filename, datasetname='main'):
         out = np.array(fid[datasetname])
     return out
 
+def createFolder(fpath):
+    if not os.path.isdir(fpath):
+            os.mkdir(fpath)
+    else:
+        pass
 
+def readNpy(filename):
+    if os.path.exists(filename):
+        return np.load(filename)
+    else:
+        return None
+
+def writeNpy(arr, filename):
+    np.save(filename, arr)
+
+def readJson(filename):
+    if os.path.exists(filename):
+        with open(filename) as f:
+            data = json.load(f)
+        return data
+    else:
+        return None
+
+def writeJson(dictionary, filename):
+    with open(filename, 'w') as f:
+        data = json.dump(dictionary, f)

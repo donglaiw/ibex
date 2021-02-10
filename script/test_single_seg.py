@@ -1,7 +1,6 @@
 import os,sys
 
 # add ibexHelper path
-sys.path.append('/home/donglai/lib/ibex_fork/ibexHelper')
 from ibexHelper.skel import CreateSkeleton,ReadSkeletons
 from ibexHelper.util import GetBbox, ReadH5, WriteH5
 from ibexHelper.skel2graph import GetGraphFromSkeleton

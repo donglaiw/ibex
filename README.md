@@ -7,14 +7,16 @@ Install
 ===
 - setup environment
 ```
+git clone https://github.com/donglaiw/ibexHelper
+cd ibexHelper/
 conda create -n ibexHelper python=2.7
 source activate ibexHelper
-conda install cython numpy scipy networkx
+pip install -r requirements.txt
 ```
 
 - compilation
 ```
-cd ibex/skeletionization/
+cd ibex/skeletonization/
 python setup.py build_ext --inplace
 cd ../../ibex/transforms/
 python setup.py build_ext --inplace
