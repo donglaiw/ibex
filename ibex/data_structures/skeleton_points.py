@@ -63,7 +63,7 @@ class Skeleton:
                 # Endpoints are mapped to Joints with positive co-ordinates
                 self.edges.append(Edge(Joint(source, iz_s, iy_s, ix_s), Joint(target, iz_t, iy_t, ix_t)))
 
-    def get_edges(self):
+    def get_edges_position(self):
         """Returns E x 2 x 3 ndarray of edge co-ordinates,where E is # edges"""
         n_edges = len(self.edges)
         edges = np.zeros((n_edges,2,3), dtype=np.int)
@@ -71,6 +71,18 @@ class Skeleton:
         for i in range(n_edges):
             edges[i,0,:] = [self.edges[i].source.iz, self.edges[i].source.iy, self.edges[i].source.ix]
             edges[i,1,:] = [self.edges[i].target.iz, self.edges[i].target.iy, self.edges[i].target.ix]
+        return edges
+
+    def get_edges(self):
+        """Returns E x 2 ndarray of node ids # edges"""
+        n_edges = len(self.edges)
+        edges = np.zeros((n_edges,2), dtype=np.int)
+        if n_edges > 0:
+            # go through all edges
+            node_iv = np.unique(np.array([x.iv for x in self.joints] + [x.iv for x in self.endpoints]))
+            for i in range(n_edges):
+                edges[i,0] = np.where(node_iv == self.edges[i].source.iv)[0]
+                edges[i,1] = np.where(node_iv == self.edges[i].target.iv)[0]
         return edges
 
     def get_nodes(self, get_ends=False):

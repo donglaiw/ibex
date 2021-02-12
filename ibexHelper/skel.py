@@ -4,12 +4,12 @@ from ibex.skeletonization.generate_skeletons import TopologicalThinning, FindEnd
 from ibex.utilities.dataIO import ReadSkeletons
 from scipy.ndimage.morphology import binary_fill_holes
 
-import ipyvolume as ipv
 import numpy as np
+import cPickle as pickle
 
 # skel operation
 ##################
-def CreateSkeleton(segment, out_folder = 'temp/', in_res=(30, 48, 48), out_res=(30, 48, 48)):
+def CreateSkeleton(segment, out_folder = 'temp/', in_res=(30, 6, 6), out_res=(80, 80, 80), return_option = None):
     """
     This function uses Ibex to exctract the skeleton out of a voxel representation (in
     a .h5 file). It optionally stores the skeleton plot as an html file.
@@ -24,32 +24,19 @@ def CreateSkeleton(segment, out_folder = 'temp/', in_res=(30, 48, 48), out_res=(
     out_res:    Tuple of three integers, representing the resolution we want to use for
                 extraction of the skeleton. This is used only if you want to downsample.
 
-    plot_type: String, 'nodes' or 'edges'. If it is 'nodes' then only nodes of the skeleton
-                are plotted. If 'edges' then edges between nodes are also plotted. This can
-                take a lot of time in the 'edges' mode if the skeleton is large. Default
-                value is None in which case nothing is plotted.
-
-    return_dt: Boolean, returns distance transform if True.
-
-
     ====================
     OUTPUTS:
     ====================
     skeleton:   A skeleton object.
     
-    dt:         Distance transform, only returned if return_dt is True.
-
     """
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
 
     print('meta file')
     CreateMetaFile(in_res, segment.shape, out_folder)
-
-    print('seg: pre-process')
-    segment[segment > 0] = 1
-    segment = binary_fill_holes(segment).astype('int64')
     
+    segment = segment.astype(np.int64)
     print('seg: downsample')
     DownsampleMapping(out_folder, segment, output_resolution=out_res)
     print('skel: topological thining')
@@ -57,8 +44,22 @@ def CreateSkeleton(segment, out_folder = 'temp/', in_res=(30, 48, 48), out_res=(
     print('graph: edge/end-pt')
     FindEndpointVectors(out_folder, skeleton_algorithm='thinning', skeleton_resolution=out_res)
     FindEdges(out_folder, skeleton_algorithm='thinning', skeleton_resolution=out_res)
+
+    # return option
+    if return_option is not None:
+        skel = ReadSkeletons(out_folder, read_edges=True, downsample_resolution=out_res)
+        # 0: no return
+        if return_option == 'return':
+            return skel
+        elif return_option == 'save':
+            # save [numpy array] into pickles
+            nodes = [x.get_nodes() for x in skel]
+            edges = [x.get_edges() for x in skel]
+            pickle.dump([nodes, edges], open(out_folder + '/skel_pts.pkl', 'wb'))
+
  
-def CreateMetaFile(resolution, seg_shape,out_folder='./'):
+def CreateMetaFile(resolution, seg_shape, out_folder='./'):
+    # xyz
     meta = open(os.path.join(out_folder, 'meta.txt'), "w")
     meta.write("# resolution in nm\n")
     meta.write("%dx%dx%d\n"%(resolution[2], resolution[1], resolution[0]))
@@ -68,6 +69,7 @@ def CreateMetaFile(resolution, seg_shape,out_folder='./'):
 
  
 def PlotSkeleton(seg_name, plot_type='node', out_res=(30,48,48)): 
+    import ipyvolume as ipv
     print('Read skeletons')
     skeletons = ReadSkeletons(seg_name, skeleton_algorithm='thinning', downsample_resolution=out_res, read_edges=True)
 

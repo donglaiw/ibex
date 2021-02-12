@@ -1,1 +1,1 @@
-from .skel_multiple import *
+from .skel import *

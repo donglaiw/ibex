@@ -140,10 +140,9 @@ def ReadSkeletons(prefix, skeleton_algorithm='thinning', read_edges=False, downs
                 endpoint, vz, vy, vx, = struct.unpack('qddd', efd.read(32))
 
                 vectors[endpoint] = (vz, vy, vx)
-            if read_edges==False:
-                skeletons.append(skeleton_points.Skeleton(label, joints, endpoints, vectors, resolution, grid_size))
-            # read edges
-            else:
+
+            edges = None
+            if read_edges:
                 nedges, = struct.unpack('q', edgfd.read(8))
                 sources = []
                 targets = []
@@ -156,8 +155,10 @@ def ReadSkeletons(prefix, skeleton_algorithm='thinning', read_edges=False, downs
                     index, = struct.unpack('q', edgfd.read(8))
                     targets.append(index)
                 assert len(sources) == nedges and len(targets) == nedges
-                skeletons.append(skeleton_points.Skeleton(label, joints, endpoints, vectors, resolution, grid_size,\
-                 edges=(sources, targets)))
+                edges=(sources, targets)
+
+            skeletons.append(skeleton_points.Skeleton(label, joints, endpoints, vectors, resolution, grid_size,\
+                 edges = edges))
 
     return skeletons
 
