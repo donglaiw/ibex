@@ -79,10 +79,10 @@ class Skeleton:
         edges = np.zeros((n_edges,2), dtype=np.int)
         if n_edges > 0:
             # go through all edges
-            node_iv = np.unique(np.array([x.iv for x in self.joints] + [x.iv for x in self.endpoints]))
+            node_iv = np.array([x.iv for x in self.joints] + [x.iv for x in self.endpoints])
             for i in range(n_edges):
-                edges[i,0] = np.where(node_iv == self.edges[i].source.iv)[0]
-                edges[i,1] = np.where(node_iv == self.edges[i].target.iv)[0]
+                edges[i,0] = np.where(node_iv == self.edges[i].source.iv)[0][0]
+                edges[i,1] = np.where(node_iv == self.edges[i].target.iv)[0][0]
         return edges
 
     def get_nodes(self, get_ends=False):

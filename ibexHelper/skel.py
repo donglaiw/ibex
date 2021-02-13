@@ -9,7 +9,7 @@ import cPickle as pickle
 
 # skel operation
 ##################
-def CreateSkeleton(segment, out_folder = 'temp/', in_res=(30, 6, 6), out_res=(80, 80, 80), return_option = None):
+def CreateSkeletons(segment, out_folder = 'temp/', in_res=(30, 6, 6), out_res=(80, 80, 80), return_option = None):
     """
     This function uses Ibex to exctract the skeleton out of a voxel representation (in
     a .h5 file). It optionally stores the skeleton plot as an html file.
@@ -68,7 +68,7 @@ def CreateMetaFile(resolution, seg_shape, out_folder='./'):
     meta.close()
 
  
-def PlotSkeleton(seg_name, plot_type='node', out_res=(30,48,48)): 
+def PlotSkeletons(seg_name, plot_type='node', out_res=(30,48,48)): 
     import ipyvolume as ipv
     print('Read skeletons')
     skeletons = ReadSkeletons(seg_name, skeleton_algorithm='thinning', downsample_resolution=out_res, read_edges=True)
