@@ -3,7 +3,7 @@ from ibexHelper.skel import CreateSkeletons
 from ibexHelper.util import ReadH5
 
 def test_snemi(seg_path, output_path = './'):
-    seg = ReadH5(seg_path, 'main')
+    seg = ReadH5(seg_path)
     input_res = [30, 6, 6]
     # save into a pickle file
     CreateSkeletons(seg, output_path, res, return_option='save')
