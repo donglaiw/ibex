@@ -1,6 +1,7 @@
+# Examples
 
-ERL Evaluation
----
+
+## ERL Evaluation (test_erl.py)
 - install [funlib.evaluate](https://github.com/funkelab/funlib.evaluate)
 ```
 conda env create -n erl-eval
