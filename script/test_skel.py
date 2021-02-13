@@ -1,7 +1,7 @@
 import os,sys
 
 # add ibexHelper path
-from ibexHelper.skel import CreateSkeleton,ReadSkeletons
+from ibexHelper.skel import CreateSkeletons,ReadSkeletons
 from ibexHelper.util import GetBbox, ReadH5, WriteH5
 from ibexHelper.skel2graph import GetGraphFromSkeleton
 from ibexHelper.graph import ShrinkGraph_v2, GetNodeList, GetEdgeList
@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     if opt=='0': # mesh -> skeleton
         seg = ReadH5(seg_fn, 'main')
-        CreateSkeleton(seg, out_folder, res, res)
+        CreateSkeletons(seg, out_folder, res, res)
 
     elif opt=='1': # skeleton -> dense graph
         print('read skel')

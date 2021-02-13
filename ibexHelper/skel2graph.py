@@ -10,6 +10,24 @@ import numpy as np
 import networkx as nx
 from networkx.drawing.nx_agraph import graphviz_layout
 
+# skel for erl evaluation
+##################
+def GetERLDataFromSkeleton(nodes, edges, seg_list, res):
+    gt_graph = nx.Graph()
+    node_segment_lut = [{}]*len(seg_list)
+    cc = 0
+    for k in range(len(nodes)):
+        node = nodes[k]
+        edge = edges[k] + cc
+        for l in range(node.shape[0]):
+            gt_graph.add_node(cc, skeleton_id = k, z=node[l,0]*res[0], y=node[l,1]*res[1], x=node[l,2]*res[2])
+            for i in range(len(seg_list)):
+                node_segment_lut[i][cc] = seg_list[i][node[l,0], node[l,1], node[l,2]]
+            cc += 1
+        for l in range(edge.shape[0]):
+            gt_graph.add_edge(edge[l,0], edge[l,1])
+    return gt_graph, node_segment_lut
+ 
 # skel -> graph
 ##################
 def GetGraphFromSkeleton(skel, dt=None, dt_bb=[0,0,0], modified_bfs=True):

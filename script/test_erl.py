@@ -4,7 +4,7 @@ import pickle
 import networkx as nx
 import sys,os
 from funlib import evaluate
-   
+from ibexHelper.skel2graph import GetERLDataFromSkeleton 
 if __name__ == "__main__":
     D0 = '/n/pfister_lab2/Lab/donglai/snemi/'
     fn_pred = D0 + 'pc/test_4min_orig/zwz_init.h5'
@@ -14,34 +14,19 @@ if __name__ == "__main__":
    
     res = [30,6,6]
     nodes, edges = pickle.load(open(D0 + 'db/erl/skel_pts.pkl', 'rb'), encoding="latin1")
-    gt_graph = nx.Graph()
-    node_segment_lut = {}
-    node_segment_lut_gt = {}
-    cc = 0
-    for k in range(len(nodes)):
-        node = nodes[k]
-        edge = edges[k] + cc
-        for l in range(node.shape[0]):
-            gt_graph.add_node(cc, skeleton_id = k, z=node[l,0]*res[0], y=node[l,1]*res[1], x=node[l,2]*res[2])
-            node_segment_lut[cc] = seg_pred[node[l,0], node[l,1], node[l,2]]
-            node_segment_lut_gt[cc] = seg_gt[node[l,0], node[l,1], node[l,2]]
-            cc += 1
-        for l in range(edge.shape[0]):
-            gt_graph.add_edge(edge[l,0], edge[l,1])
+    gt_graph, node_segment_lut = GetERLDataFromSkeleton(nodes, edges, [seg_pred,seg_gt], res)
     
     scores,stat = evaluate.expected_run_length(
                     skeletons=gt_graph,
                     skeleton_id_attribute='skeleton_id',
                     edge_length_attribute='length',
-                    node_segment_lut=node_segment_lut,
+                    node_segment_lut=node_segment_lut[0],
                     skeleton_position_attributes=['z', 'y', 'x'],
                     return_merge_split_stats = True)
     scores_gt,stat_gt = evaluate.expected_run_length(
                     skeletons=gt_graph,
                     skeleton_id_attribute='skeleton_id',
                     edge_length_attribute='length',
-                    node_segment_lut=node_segment_lut_gt,
+                    node_segment_lut=node_segment_lut[1],
                     skeleton_position_attributes=['z', 'y', 'x'],
                     return_merge_split_stats = True)
-
-    import pdb; pdb.set_trace()
